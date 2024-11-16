@@ -10,10 +10,16 @@ require('events.left-status').setup()
 require('events.tab-title').setup()
 require('events.new-tab-button').setup()
 
+local platform = require('utils.platform')
+
 local wezterm = require 'wezterm'
 local mux = wezterm.mux
 
-local cache_dir = os.getenv('HOME') .. '/.config/wezterm/'
+local home_dir = os.getenv('HOME')
+if platform.is_win then
+    home_dir = os.getenv('USERPROFILE')
+end
+local cache_dir = home_dir .. '/.config/wezterm/'
 local window_size_cache_path = cache_dir .. 'window_size_cache.txt'
 
 wezterm.on('gui-startup', function()
