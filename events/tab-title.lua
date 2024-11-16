@@ -93,6 +93,7 @@ end
 ---@field title string
 ---@field cells Cells
 ---@field title_locked boolean
+---@field locked_title string
 ---@field is_wsl boolean
 ---@field is_admin boolean
 ---@field unseen_output boolean
@@ -105,6 +106,7 @@ function Tab:new()
       title = '',
       cells = Cells:new(),
       title_locked = false,
+      locked_title = '',
       is_wsl = false,
       is_admin = false,
       unseen_output = false,
@@ -119,17 +121,19 @@ function Tab:set_info(pane, max_width)
    self.is_admin = (pane.title:match('^Administrator: ') or pane.title:match('(Admin)')) ~= nil
    self.unseen_output = pane.has_unseen_output
 
-   if self.title_locked then
-      return
-   end
    local inset = (self.is_admin or self.is_wsl) and TITLE_INSET.ICON or TITLE_INSET.DEFAULT
    if self.unseen_output then
       inset = inset + 2
    end
+
+   if self.title_locked then
+      self.title = create_title('', self.locked_title, max_width, inset)
+      return
+   end
    self.title = create_title(process_name, pane.title, max_width, inset)
 end
 
-function Tab:set_cells()
+function Tab:create_cells()
    self.cells
       :add_segment('scircle_left', GLYPH_SCIRCLE_LEFT)
       :add_segment('admin', ' ' .. GLYPH_ADMIN)
@@ -142,7 +146,7 @@ end
 
 ---@param title string
 function Tab:update_and_lock_title(title)
-   self.title = title
+   self.locked_title = title
    self.title_locked = true
 end
 
@@ -187,7 +191,7 @@ M.setup = function()
    -- CUSTOM EVENT
    -- Event listener to manually update the tab name
    -- Tab name will remain locked until the `reset-tab-title` is triggered
-   wezterm.on('manual-update-tab-title', function(window, pane)
+   wezterm.on('tabs.manual-update-tab-title', function(window, pane)
       window:perform_action(
          wezterm.action.PromptInputLine({
             description = wezterm.format({
@@ -209,19 +213,28 @@ M.setup = function()
 
    -- CUSTOM EVENT
    -- Event listener to unlock manually set tab name
-   wezterm.on('reset-tab-title', function(window, _pane)
+   wezterm.on('tabs.reset-tab-title', function(window, _pane)
       local tab = window:active_tab()
       local id = tab:tab_id()
       tab_list[id].title_locked = false
    end)
 
+   -- CUSTOM EVENT
+   -- Event listener to manually update the tab name
+   wezterm.on('tabs.toggle-tab-bar', function(window, _pane)
+      local effective_config = window:effective_config()
+      window:set_config_overrides({
+         enable_tab_bar = not effective_config.enable_tab_bar,
+         background = effective_config.background,
+      })
+   end)
+
    -- BUILTIN EVENT
    wezterm.on('format-tab-title', function(tab, _tabs, _panes, _config, hover, max_width)
-   print(tab_list)
       if not tab_list[tab.tab_id] then
          tab_list[tab.tab_id] = Tab:new()
          tab_list[tab.tab_id]:set_info(tab.active_pane, max_width)
-         tab_list[tab.tab_id]:set_cells()
+         tab_list[tab.tab_id]:create_cells()
          return tab_list[tab.tab_id]:render()
       end
 
