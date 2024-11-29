@@ -8,6 +8,7 @@ return {
    webgpu_power_preference = 'HighPerformance',
    webgpu_preferred_adapter = gpu_adapters:pick_best(),
    -- webgpu_preferred_adapter = gpu_adapters:pick_manual('Dx12', 'IntegratedGpu'),
+   -- webgpu_preferred_adapter = gpu_adapters:pick_manual('Gl', 'Other'),
 
    -- cursor
    animation_fps = 120,
@@ -20,7 +21,7 @@ return {
    colors = colors,
 
    -- background
-   background = backdrops:create_opts(),
+   background = backdrops:initial_options(false), -- set to true if you want wezterm to start on focus mode
 
    -- scrollbar
    enable_scroll_bar = true,
