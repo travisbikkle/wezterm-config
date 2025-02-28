@@ -31,7 +31,7 @@ wezterm.on('gui-startup', function()
     _, _, width, height = string.find(window_size_cache_file:read(), '(%d+),(%d+)')
     local tab, pane, window = mux.spawn_window{ width = tonumber(width), height = tonumber(height), position = {x=900, y=0} }
     window_size_cache_file:close()
-    os.remove(window_size_cache_path)
+    -- os.remove(window_size_cache_path)
   else
     local tab, pane, window = mux.spawn_window{}
     window:gui_window():maximize()
